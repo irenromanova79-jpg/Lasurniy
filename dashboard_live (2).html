@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ООО СПК «Лазурный» — живой дашборд</title>
+<style>
+  :root{
+    --ink:#23211D;--ink-soft:#6B655C;--paper:#FBFAF7;--card:#FFFFFF;--line:#E7E2D8;
+    --walnut:#A06A3C;--teal:#2C6E6B;--green:#2F6B4F;--green-soft:#E6F0EA;--brick:#B0472E;
+    --brick-soft:#F6E7E1;--amber:#C68A3E;--prev:#CFC6B6;--shadow:0 1px 2px rgba(35,33,29,.04),0 8px 24px rgba(35,33,29,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:24px 22px 64px}
+  .num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  h1,h2{font-family:Georgia,"Times New Roman",serif}
+  .top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding-bottom:14px;border-bottom:2px solid var(--ink)}
+  .brand .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--walnut);font-weight:700}
+  .brand h1{margin:2px 0 0;font-size:23px}
+  .tabs{display:inline-flex;background:#F1ECE2;border-radius:11px;padding:4px;gap:3px;flex-wrap:wrap}
+  .tab{border:0;background:transparent;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink-soft);padding:8px 14px;border-radius:8px;cursor:pointer}
+  .tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 4px}
+  .seg{display:inline-flex;background:#F1ECE2;border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+  .seg button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:700;color:var(--ink-soft);padding:6px 12px;border-radius:7px;cursor:pointer}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .banner{font-size:13px;padding:9px 13px;border-radius:9px;margin:14px 0;border:1px solid}
+  .banner.warn{background:#FAF6EE;border-color:#EFE7D6;color:#7a6a45}
+  .banner.ok{background:var(--green-soft);border-color:#cfe5d8;color:#2c5a43}
+  .grid{display:grid;gap:14px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 3px;font-size:15px}.card .cap{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px}
+  .kpi .lbl{font-size:13px;color:var(--ink-soft)}
+  .kpi .val{font-family:Georgia,serif;font-weight:700;font-size:30px;line-height:1.1;margin-top:6px}
+  .kpi .val small{font-size:15px;font-weight:700;opacity:.7}
+  .kpi .foot{margin-top:8px;font-size:13px;color:var(--ink-soft)}
+  .pos{color:var(--green)}.neg{color:var(--brick)}
+  .bars{display:flex;flex-direction:column;gap:11px}
+  .bar-row{display:grid;grid-template-columns:170px 1fr auto;align-items:center;gap:12px}
+  .bar-row .name{font-size:13.5px}
+  .bar-track{background:#F1ECE2;border-radius:7px;height:21px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:7px}
+  .bar-row .amt{font-size:13.5px;font-weight:700;text-align:right;min-width:96px}
+  @media(max-width:520px){.bar-row{grid-template-columns:120px 1fr}.bar-row .amt{grid-column:2}}
+  .zone-head{display:flex;align-items:baseline;gap:12px;margin:30px 0 12px}
+  .zone-head h2{margin:0;font-size:20px}
+  table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.t th,table.t td{border:1px solid var(--line);padding:7px 10px;text-align:right}
+  table.t th:first-child,table.t td:first-child{text-align:left}
+  table.t th{background:#D5E8F0;color:#1F4E79;font-weight:700}
+  table.t tr.tot td{background:#EAF3FA;font-weight:700}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:6px}
+  footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-soft)}
+  code{background:#F1ECE2;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="eyebrow">ООО СПК «Лазурный» · живой дашборд</span><h1>Финансовая панель</h1></div>
+    <div class="tabs" id="tabs"></div>
+  </header>
+  <div id="status"></div>
+  <div class="ctrl" id="periodCtrl"></div>
+  <div id="view"></div>
+  <footer>
+    Данные подтягиваются из Google-таблицы (лист FLAT). Обновите отчёты в таблице → перезагрузите страницу.
+    <span id="loadinfo"></span>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   НАСТРОЙКА: вставьте сюда ссылку на опубликованный CSV листа FLAT
+   (Файл → Поделиться → Опубликовать в интернете → лист FLAT → CSV)
+   Пока пусто — показываются демо-данные.
+   ============================================================ */
+var SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQFfnIiV8SYeakNwCUruDOOzWgJe7fO1NHa9eFvHs7vBuPEUdQZag85Xit0v-QH47HtzzcA5Pe8JoWz/pub?gid=478162687&single=true&output=csv";
+
+/* ---------- демо-данные (используются, пока нет ссылки) ---------- */
+/* формат строки: [Отчёт,Период,Канал,Категория,Позиция,Показатель,Значение,Уровень] */
+var DEMO = [
+  // ОПиУ — итоги проектов (для KPI: выручка и чистая прибыль)
+  ["ОПиУ","март 2026","Опт","","Опт","Доход",8035053,"канал/направление"],
+  ["ОПиУ","март 2026","Опт","","Опт","Прибыль (убыток)",-2518229,"канал/направление"],
+  ["ОПиУ","март 2026","Маркетплейсы","","Маркетплейсы","Доход",13478646,"канал/направление"],
+  ["ОПиУ","март 2026","Маркетплейсы","","Маркетплейсы","Прибыль (убыток)",3814032,"канал/направление"],
+  ["ОПиУ","апр. 2026","Опт","","Опт","Доход",9226747,"канал/направление"],
+  ["ОПиУ","апр. 2026","Опт","","Опт","Прибыль (убыток)",-466592,"канал/направление"],
+  ["ОПиУ","апр. 2026","Маркетплейсы","","Маркетплейсы","Доход",17296440,"канал/направление"],
+  ["ОПиУ","апр. 2026","Маркетплейсы","","Маркетплейсы","Прибыль (убыток)",3556605,"канал/направление"],
+  // Валовая прибыль — позиции по каналам (для вкладки Каналы): выручка + себестоимость
+  ["ВаловаяПрибыль","март 2026","Маркетплейсы","","Стулья (хиты)","Выручка",13478646,"позиция"],
+  ["ВаловаяПрибыль","март 2026","Маркетплейсы","","Стулья (хиты)","Себестоимость",2117322,"позиция"],
+  ["ВаловаяПрибыль","март 2026","Опт","","Стулья и пр.","Выручка",8035053,"позиция"],
+  ["ВаловаяПрибыль","март 2026","Опт","","Стулья и пр.","Себестоимость",3568299,"позиция"],
+  ["ВаловаяПрибыль","апр. 2026","Маркетплейсы","","Стулья (хиты)","Выручка",17296440,"позиция"],
+  ["ВаловаяПрибыль","апр. 2026","Маркетплейсы","","Стулья (хиты)","Себестоимость",2199394,"позиция"],
+  ["ВаловаяПрибыль","апр. 2026","Опт","","Стулья и пр.","Выручка",9226747,"позиция"],
+  ["ВаловаяПрибыль","апр. 2026","Опт","","Стулья и пр.","Себестоимость",3165480,"позиция"],
+  // Продажи — топ позиций
+  ["Продажи","март 2026","Маркетплейсы","","Стул Гольф 11 п/м","Выручка",4317428,"позиция"],
+  ["Продажи","март 2026","Маркетплейсы","","Стул Гольф 103","Выручка",3162311,"позиция"],
+  ["Продажи","март 2026","Опт","","Стул Веста мягкий","Выручка",2009850,"позиция"],
+  ["Продажи","март 2026","Опт","","Стул Форио","Выручка",810780,"позиция"],
+  ["Продажи","апр. 2026","Маркетплейсы","","Стул Гольф 11 п/м","Выручка",5060131,"позиция"],
+  ["Продажи","апр. 2026","Маркетплейсы","","Стул Гольф 103","Выручка",3784556,"позиция"],
+  ["Продажи","апр. 2026","Маркетплейсы","","Стул Форио","Выручка",2238359,"позиция"],
+  ["Продажи","апр. 2026","Опт","","Стул Элин жёст","Выручка",1956550,"позиция"],
+  ["Продажи","апр. 2026","Опт","","Каркас BAXTER","Выручка",781200,"позиция"],
+  // ОДДС — направления (апрель)
+  ["ОДДС","апр. 2026","Операционная деятельность","","Операционная деятельность","Чистый денежный поток",1502865,"канал/направление"],
+  ["ОДДС","апр. 2026","Инвестиционная деятельность","","Инвестиционная деятельность","Чистый денежный поток",540000,"канал/направление"],
+  ["ОДДС","апр. 2026","Финансовая деятельность","","Финансовая деятельность","Чистый денежный поток",-1034960,"канал/направление"],
+  ["ОДДС","март 2026","Операционная деятельность","","Операционная деятельность","Чистый денежный поток",-179158,"канал/направление"],
+  ["ОДДС","март 2026","Инвестиционная деятельность","","Инвестиционная деятельность","Чистый денежный поток",-389000,"канал/направление"],
+  ["ОДДС","март 2026","Финансовая деятельность","","Финансовая деятельность","Чистый денежный поток",-277806,"канал/направление"]
+];
+
+var C={walnut:'#A06A3C',teal:'#2C6E6B',green:'#2F6B4F',brick:'#B0472E',amber:'#C68A3E'};
+var COLS=['report','period','channel','category','item','metric','value','level'];
+
+/* ---------- утилиты ---------- */
+function grp(n){return (Math.round(n)).toLocaleString('ru-RU');}
+function mln(v){return (v/1e6).toFixed(2).replace('.',',');}
+function money(v){return Math.abs(v)>=1e6?mln(v)+' млн':(grp(v/1e3)+' тыс');}
+function pc1(v){return (v).toFixed(1).replace('.',',');}
+function monthIdx(label){
+  var m=String(label).toLowerCase();
+  var names=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  var yi=(m.match(/\d{4}/)||['0'])[0];
+  for(var i=0;i<12;i++) if(m.indexOf(names[i])>=0) return parseInt(yi)*12+i;
+  return 999999;
+}
+// Парсер таблицы: сам определяет разделитель (табуляция или запятая), понимает кавычки
+function parseTable(text){
+  var first=text.split(/\r?\n/)[0]||'';
+  var delim=(first.split('\t').length > first.split(',').length)?'\t':',';
+  var rows=[],row=[],cur='',q=false;
+  for(var i=0;i<text.length;i++){var c=text[i];
+    if(q){ if(c=='"'){ if(text[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else { if(c=='"')q=true; else if(c==delim){row.push(cur);cur='';} else if(c=='\n'||c=='\r'){ if(cur!==''||row.length){row.push(cur);rows.push(row);row=[];cur='';} if(c=='\r'&&text[i+1]=='\n')i++; } else cur+=c; }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+function toNum(v){ if(typeof v==='number')return v; var s=String(v).replace(/\u00A0/g,'').replace(/\s/g,'').replace(',','.'); var n=parseFloat(s); return isNaN(n)?0:n; }
+
+/* ---------- загрузка ---------- */
+var ROWS=[],PERIODS=[],SOURCE='демо';
+function rowObj(arr){var o={};COLS.forEach(function(k,i){o[k]=arr[i];});o.value=toNum(o.value);return o;}
+function uniq(a){var s=[],seen={};a.forEach(function(x){if(!seen[x]){seen[x]=1;s.push(x);}});return s;}
+
+function finish(){
+  PERIODS=uniq(ROWS.map(function(r){return r.period;})).sort(function(a,b){return monthIdx(a)-monthIdx(b);});
+  render();
+}
+function load(){
+  if(SHEET_CSV_URL){
+    fetch(SHEET_CSV_URL).then(function(r){return r.text();}).then(function(txt){
+      var raw=parseTable(txt.trim());
+      var head=(raw[0]||[]).map(function(s){return s.trim();});
+      var idx={report:head.indexOf('Отчёт'),period:head.indexOf('Период'),channel:head.indexOf('Канал'),
+        category:head.indexOf('Категория'),item:head.indexOf('Позиция'),metric:head.indexOf('Показатель'),
+        value:head.indexOf('Значение'),level:head.indexOf('Уровень')};
+      if(idx.report<0||idx.period<0||idx.value<0){
+        // опубликован не тот лист (или нет заголовков FLAT)
+        ROWS=DEMO.map(rowObj); SOURCE='демо (опубликован не лист FLAT)'; finish(); return;
+      }
+      ROWS=raw.slice(1).filter(function(r){return r.length>=7&&(r[idx.report]||'').trim();}).map(function(r){
+        return {report:(r[idx.report]||'').trim(),period:(r[idx.period]||'').trim(),channel:(r[idx.channel]||'').trim(),
+          category:idx.category>=0?(r[idx.category]||'').trim():'',item:(r[idx.item]||'').trim(),
+          metric:(r[idx.metric]||'').trim(),value:toNum(r[idx.value]),level:idx.level>=0?(r[idx.level]||'').trim():''};});
+      SOURCE=ROWS.length?'Google-таблица':'демо (в листе FLAT нет данных)';
+      if(!ROWS.length) ROWS=DEMO.map(rowObj);
+      finish();
+    }).catch(function(){ ROWS=DEMO.map(rowObj); SOURCE='демо (ошибка загрузки ссылки)'; finish(); });
+  } else { ROWS=DEMO.map(rowObj); SOURCE='демо'; finish(); }
+}
+
+/* ---------- агрегации ---------- */
+function sum(rows){return rows.reduce(function(a,r){return a+r.value;},0);}
+function f(rep,per,metric,level){return ROWS.filter(function(r){return r.report===rep&&(!per||r.period===per)&&(!metric||r.metric===metric)&&(!level||r.level===level);});}
+function channelsIn(rep,per){return uniq(ROWS.filter(function(r){return r.report===rep&&r.period===per;}).map(function(r){return r.channel;}));}
+
+function pnlTotals(per){ // выручка и чистая прибыль из ОПиУ (итоги проектов)
+  var rev=sum(f('ОПиУ',per,'Доход','канал/направление'));
+  var net=sum(ROWS.filter(function(r){return r.report==='ОПиУ'&&r.period===per&&r.level==='канал/направление'&&/прибыл/i.test(r.metric);}));
+  return {rev:rev,net:net};
+}
+function grossByChannel(per){ // выручка/себестоимость/ВП по каналам из ВаловаяПрибыль
+  var res={};
+  ROWS.filter(function(r){return r.report==='ВаловаяПрибыль'&&r.period===per;}).forEach(function(r){
+    res[r.channel]=res[r.channel]||{rev:0,cogs:0};
+    if(/выручк/i.test(r.metric))res[r.channel].rev+=r.value;
+    if(/себест/i.test(r.metric))res[r.channel].cogs+=r.value;
+  });
+  return res;
+}
+function salesTop(per,n){
+  var m={};
+  ROWS.filter(function(r){return r.report==='Продажи'&&r.period===per&&/выручк/i.test(r.metric);}).forEach(function(r){
+    var k=r.item; m[k]=m[k]||{name:r.item,channel:r.channel,rev:0}; m[k].rev+=r.value;});
+  return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.rev-a.rev;}).slice(0,n||10);
+}
+function cashDirs(per){
+  return ROWS.filter(function(r){return r.report==='ОДДС'&&r.period===per&&/чистый/i.test(r.metric);})
+    .map(function(r){return {name:r.channel,net:r.value};});
+}
+
+/* ---------- рендер ---------- */
+var TAB='Обзор', PER=null;
+var TABS=['Обзор','Каналы','Продажи','Деньги'];
+function bars(rows,max,fmt){ // rows: [name,val,color]
+  return '<div class="bars">'+rows.map(function(d){var w=Math.max(2,Math.abs(d[1])/max*100);
+    return '<div class="bar-row"><div class="name">'+d[0]+'</div><div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:'+d[2]+'"></div></div><div class="amt num">'+(fmt?fmt(d[1]):money(d[1])+' ₽')+'</div></div>';}).join('')+'</div>';
+}
+
+function render(){
+  // tabs
+  document.getElementById('tabs').innerHTML=TABS.map(function(t){return '<button class="tab'+(t===TAB?' on':'')+'" onclick="setTab(\''+t+'\')">'+t+'</button>';}).join('');
+  // status
+  document.getElementById('status').innerHTML='<div class="banner '+(SOURCE.indexOf('Google')>=0?'ok':'warn')+'">'+
+    (SOURCE.indexOf('Google')>=0?'✓ Данные из вашей таблицы. ':'⚠ Показаны демо-данные. Чтобы подключить свои — вставьте ссылку на опубликованный CSV листа FLAT в строку <code>SHEET_CSV_URL</code> в начале файла. ')+
+    'Периоды: '+(PERIODS.join(', ')||'нет')+'</div>';
+  document.getElementById('loadinfo').textContent=' · источник: '+SOURCE;
+  if(!PER||PERIODS.indexOf(PER)<0) PER=PERIODS[PERIODS.length-1];
+  // period control (hidden on Каналы which shows all periods)
+  var pc=document.getElementById('periodCtrl');
+  if(TAB==='Каналы'){ pc.innerHTML=''; }
+  else { pc.innerHTML='<span style="font-size:13px;color:var(--ink-soft)">Период:</span> <span class="seg">'+
+    PERIODS.map(function(p){return '<button class="'+(p===PER?'on':'')+'" onclick="setPer(\''+p+'\')">'+p+'</button>';}).join('')+'</span>'; }
+  var v=document.getElementById('view');
+  if(TAB==='Обзор') v.innerHTML=viewOverview();
+  else if(TAB==='Каналы') v.innerHTML=viewChannels();
+  else if(TAB==='Продажи') v.innerHTML=viewSales();
+  else if(TAB==='Деньги') v.innerHTML=viewCash();
+}
+function setTab(t){TAB=t;render();}
+function setPer(p){PER=p;render();}
+
+function viewOverview(){
+  var t=pnlTotals(PER);
+  var g=grossByChannel(PER);
+  var rev=t.rev||Object.keys(g).reduce(function(a,k){return a+g[k].rev;},0);
+  var netCard = f('ОПиУ',PER,'Доход','канал/направление').length
+    ? '<div class="card kpi"><div class="lbl">Чистая прибыль</div><div class="val num '+(t.net>=0?'pos':'neg')+'">'+(t.net>=0?'+':'')+mln(t.net)+'<small> млн ₽</small></div><div class="foot">рентабельность '+(rev?pc1(t.net/rev*100):'—')+'%</div></div>'
+    : '<div class="card kpi"><div class="lbl">Чистая прибыль</div><div class="val num" style="color:var(--ink-soft);font-size:18px">нет данных ОПиУ</div><div class="foot">загрузите отчёт ОПиУ</div></div>';
+  var chRows=Object.keys(g).map(function(k){return [k, g[k].rev, k==='Маркетплейсы'?C.teal:C.walnut];});
+  var maxRev=Math.max.apply(null,chRows.map(function(r){return r[1];}).concat([1]));
+  return '<section class="grid g3" style="margin-top:8px">'+
+    '<div class="card kpi"><div class="lbl">Выручка</div><div class="val num">'+mln(rev)+'<small> млн ₽</small></div><div class="foot">'+PER+'</div></div>'+
+    netCard+
+    '<div class="card kpi"><div class="lbl">Каналов в данных</div><div class="val num">'+chRows.length+'</div><div class="foot">'+Object.keys(g).join(', ')+'</div></div>'+
+  '</section>'+
+  '<div class="zone-head"><h2>Выручка по каналам</h2></div>'+
+  '<div class="card">'+(chRows.length?bars(chRows,maxRev):'<div class="cap">Нет данных по каналам (загрузите «Валовую прибыль»).</div>')+'</div>';
+}
+
+function viewChannels(){
+  // таблица: каналы × периоды (валовая маржа)
+  var head='<tr><th>Канал · период</th><th>Выручка</th><th>Себестоимость</th><th>Валовая прибыль</th><th>Рентабельность</th></tr>';
+  var body='';
+  PERIODS.forEach(function(p){
+    var g=grossByChannel(p);
+    Object.keys(g).forEach(function(ch){
+      var x=g[ch],gp=x.rev-x.cogs,rent=x.rev?gp/x.rev*100:0;
+      body+='<tr><td><span class="sw" style="background:'+(ch==='Маркетплейсы'?C.teal:C.walnut)+'"></span>'+ch+' · '+p+'</td><td class="num">'+grp(x.rev)+'</td><td class="num">'+grp(x.cogs)+'</td><td class="num">'+grp(gp)+'</td><td class="num">'+pc1(rent)+'%</td></tr>';
+    });
+  });
+  if(!body) return '<div class="card"><div class="cap">Нет данных «Валовая прибыль». Загрузите этот отчёт, чтобы увидеть маржу по каналам.</div></div>';
+  return '<div class="zone-head"><h2>Маржа по каналам (выручка − себестоимость)</h2></div>'+
+    '<div class="card"><p class="cap">чистая база без «качелей» учёта и без распределения ЗП — по всем загруженным месяцам</p>'+
+    '<table class="t">'+head+body+'</table></div>';
+}
+
+function viewSales(){
+  var top=salesTop(PER,10);
+  if(!top.length) return '<div class="card"><div class="cap">Нет данных «Продажи» за '+PER+'.</div></div>';
+  var max=top[0].rev;
+  var rows=top.map(function(s){return [s.name+' · '+s.channel, s.rev, s.channel==='Маркетплейсы'?C.teal:C.walnut];});
+  return '<div class="zone-head"><h2>Топ позиций по выручке · '+PER+'</h2></div><div class="card">'+bars(rows,max)+'</div>';
+}
+
+function viewCash(){
+  var dirs=cashDirs(PER);
+  if(!dirs.length) return '<div class="card"><div class="cap">Нет данных ОДДС за '+PER+'.</div></div>';
+  var total=dirs.reduce(function(a,d){return a+d.net;},0);
+  var max=Math.max.apply(null,dirs.map(function(d){return Math.abs(d.net);}).concat([1]));
+  var rows=dirs.map(function(d){return [d.name,d.net,d.net>=0?C.green:C.brick];});
+  return '<div class="zone-head"><h2>Денежный поток по направлениям · '+PER+'</h2></div>'+
+    '<div class="card">'+bars(rows,max,function(v){return (v>=0?'+':'−')+money(Math.abs(v))+' ₽';})+
+    '<div style="margin-top:14px;font-weight:700;font-family:Georgia,serif;font-size:18px">Итого: <span class="'+(total>=0?'pos':'neg')+'">'+(total>=0?'+':'−')+mln(Math.abs(total))+' млн ₽</span></div></div>';
+}
+
+load();
+</script>
+</body>
+</html>
